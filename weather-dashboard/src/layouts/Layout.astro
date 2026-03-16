@@ -1,0 +1,75 @@
+---
+// src/layouts/Layout.astro
+const { title } = Astro.props;
+---
+
+<!doctype html>
+<html lang="es">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>{title}</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=Syne:wght@400;600;700;800&display=swap"
+      rel="stylesheet"
+    />
+  </head>
+  <body>
+    <slot />
+  </body>
+</html>
+
+<style is:global>
+  :root {
+    --bg: #f0ede8;
+    --surface: #ffffff;
+    --surface2: #e8e4dd;
+    --text: #1a1714;
+    --text-muted: #7a756e;
+    --accent: #d4622a;
+    --accent2: #4a7c8e;
+    --border: rgba(0, 0, 0, 0.08);
+    --shadow: 0 2px 20px rgba(0, 0, 0, 0.06);
+    --radius: 16px;
+  }
+
+  [data-theme="dark"] {
+    --bg: #111210;
+    --surface: #1c1e1b;
+    --surface2: #252723;
+    --text: #e8e6e1;
+    --text-muted: #7a7d74;
+    --accent: #e07040;
+    --accent2: #6aacbe;
+    --border: rgba(255, 255, 255, 0.06);
+    --shadow: 0 2px 20px rgba(0, 0, 0, 0.3);
+  }
+
+  *, *::before, *::after {
+    box-sizing: border-box;
+    margin: 0;
+    padding: 0;
+  }
+
+  html {
+    font-size: 16px;
+    scroll-behavior: smooth;
+  }
+
+  body {
+    font-family: 'Syne', sans-serif;
+    background-color: var(--bg);
+    color: var(--text);
+    transition: background-color 0.3s ease, color 0.3s ease;
+    min-height: 100vh;
+  }
+
+  button {
+    cursor: pointer;
+    font-family: inherit;
+    border: none;
+    background: none;
+  }
+</style>

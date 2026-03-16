@@ -1,0 +1,500 @@
+---
+// src/pages/index.astro
+import Layout from '../layouts/Layout.astro';
+import WeatherCard from '../components/WeatherCard.astro';
+---
+
+<Layout title="SkyCast — Dashboard del Clima">
+  <div class="wrapper">
+
+    <!-- HEADER -->
+    <header class="header">
+      <div class="logo">
+        <span class="logo-icon">⛅</span>
+        <span class="logo-text">SkyCast</span>
+      </div>
+      <button id="theme-toggle" class="theme-btn" aria-label="Cambiar tema">
+        <span id="theme-icon">🌙</span>
+      </button>
+    </header>
+
+    <!-- SECTION 1: BÚSQUEDA -->
+    <section class="search-section" aria-label="Buscar ciudad">
+      <h1 class="headline">¿Cómo está el clima<br /><em>hoy?</em></h1>
+      <div class="search-bar">
+        <input
+          type="text"
+          id="city-input"
+          placeholder="Ingresá una ciudad..."
+          autocomplete="off"
+        />
+        <button id="search-btn" class="search-btn">Buscar</button>
+      </div>
+      <p id="error-msg" class="error-msg" hidden>Ciudad no encontrada. Probá con otro nombre.</p>
+    </section>
+
+    <!-- SECTION 2: CLIMA ACTUAL -->
+    <section class="current-section" id="current-section" aria-label="Clima actual" hidden>
+      <div class="current-header">
+        <div>
+          <h2 id="city-name" class="city-name"></h2>
+          <p id="weather-desc" class="weather-desc"></p>
+        </div>
+        <div class="temp-display">
+          <span id="temp-value" class="temp-big"></span>
+          <span class="temp-unit">°C</span>
+        </div>
+      </div>
+
+      <div class="cards-grid">
+        <WeatherCard label="Sensación Térmica" value="—" unit="°C" icon="🌡️" />
+        <WeatherCard label="Humedad" value="—" unit="%" icon="💧" />
+        <WeatherCard label="Viento" value="—" unit="km/h" icon="💨" />
+        <WeatherCard label="Precipitación" value="—" unit="mm" icon="🌧️" />
+      </div>
+    </section>
+
+    <!-- SECTION 3: PRONÓSTICO 7 DÍAS -->
+    <section class="forecast-section" id="forecast-section" aria-label="Pronóstico semanal" hidden>
+      <h3 class="section-title">Próximos 7 días</h3>
+      <div class="forecast-grid" id="forecast-grid"></div>
+    </section>
+
+    <!-- LOADING STATE -->
+    <div id="loading" class="loading" hidden>
+      <div class="spinner"></div>
+      <p>Obteniendo datos...</p>
+    </div>
+
+    <footer class="footer">
+      <p>Datos: <a href="https://open-meteo.com" target="_blank">Open-Meteo API</a> · Geocoding: <a href="https://geocoding-api.open-meteo.com" target="_blank">Open-Meteo Geocoding</a></p>
+    </footer>
+
+  </div>
+</Layout>
+
+<style>
+  .wrapper {
+    max-width: 860px;
+    margin: 0 auto;
+    padding: 2rem 1.5rem 4rem;
+  }
+
+  /* HEADER */
+  .header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 3rem;
+  }
+
+  .logo {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+  }
+
+  .logo-icon { font-size: 1.4rem; }
+
+  .logo-text {
+    font-size: 1.2rem;
+    font-weight: 800;
+    letter-spacing: -0.02em;
+    color: var(--accent);
+  }
+
+  .theme-btn {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 50%;
+    width: 40px;
+    height: 40px;
+    font-size: 1.1rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: background 0.2s, transform 0.2s;
+  }
+
+  .theme-btn:hover {
+    transform: rotate(20deg);
+    background: var(--surface2);
+  }
+
+  /* SECTION 1 – SEARCH */
+  .search-section {
+    margin-bottom: 3rem;
+  }
+
+  .headline {
+    font-size: clamp(2rem, 6vw, 3.5rem);
+    font-weight: 800;
+    line-height: 1.1;
+    letter-spacing: -0.03em;
+    margin-bottom: 1.5rem;
+  }
+
+  .headline em {
+    font-style: normal;
+    color: var(--accent);
+  }
+
+  .search-bar {
+    display: flex;
+    gap: 0.75rem;
+    max-width: 480px;
+  }
+
+  #city-input {
+    flex: 1;
+    padding: 0.85rem 1.2rem;
+    border-radius: 12px;
+    border: 1.5px solid var(--border);
+    background: var(--surface);
+    color: var(--text);
+    font-family: 'Syne', sans-serif;
+    font-size: 1rem;
+    outline: none;
+    transition: border-color 0.2s;
+  }
+
+  #city-input:focus {
+    border-color: var(--accent);
+  }
+
+  .search-btn {
+    padding: 0.85rem 1.5rem;
+    border-radius: 12px;
+    background: var(--accent);
+    color: #fff;
+    font-weight: 700;
+    font-size: 0.95rem;
+    letter-spacing: 0.02em;
+    transition: opacity 0.2s, transform 0.1s;
+  }
+
+  .search-btn:hover { opacity: 0.88; }
+  .search-btn:active { transform: scale(0.97); }
+
+  .error-msg {
+    margin-top: 0.75rem;
+    color: #c0392b;
+    font-size: 0.9rem;
+  }
+
+  /* SECTION 2 – CURRENT WEATHER */
+  .current-section {
+    margin-bottom: 3rem;
+    animation: fadeUp 0.4s ease;
+  }
+
+  .current-header {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 2rem;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 1.25rem;
+    box-shadow: var(--shadow);
+  }
+
+  .city-name {
+    font-size: 1.8rem;
+    font-weight: 800;
+    letter-spacing: -0.02em;
+  }
+
+  .weather-desc {
+    color: var(--text-muted);
+    font-size: 1rem;
+    margin-top: 0.3rem;
+  }
+
+  .temp-display {
+    display: flex;
+    align-items: flex-start;
+  }
+
+  .temp-big {
+    font-size: 4rem;
+    font-weight: 800;
+    font-family: 'DM Mono', monospace;
+    line-height: 1;
+    color: var(--accent);
+  }
+
+  .temp-unit {
+    font-size: 1.5rem;
+    font-weight: 600;
+    color: var(--text-muted);
+    margin-top: 0.3rem;
+  }
+
+  .cards-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+    gap: 1rem;
+  }
+
+  /* SECTION 3 – FORECAST */
+  .forecast-section {
+    animation: fadeUp 0.4s ease 0.1s both;
+  }
+
+  .section-title {
+    font-size: 1.1rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.07em;
+    color: var(--text-muted);
+    margin-bottom: 1rem;
+  }
+
+  .forecast-grid {
+    display: grid;
+    grid-template-columns: repeat(7, 1fr);
+    gap: 0.75rem;
+  }
+
+  /* LOADING */
+  .loading {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 1rem;
+    padding: 3rem;
+    color: var(--text-muted);
+  }
+
+  .spinner {
+    width: 36px;
+    height: 36px;
+    border: 3px solid var(--border);
+    border-top-color: var(--accent);
+    border-radius: 50%;
+    animation: spin 0.7s linear infinite;
+  }
+
+  /* FOOTER */
+  .footer {
+    margin-top: 4rem;
+    text-align: center;
+    font-size: 0.8rem;
+    color: var(--text-muted);
+  }
+
+  .footer a {
+    color: var(--accent2);
+    text-decoration: none;
+  }
+
+  /* ANIMATIONS */
+  @keyframes fadeUp {
+    from { opacity: 0; transform: translateY(16px); }
+    to   { opacity: 1; transform: translateY(0); }
+  }
+
+  @keyframes spin {
+    to { transform: rotate(360deg); }
+  }
+
+  /* RESPONSIVE */
+  @media (max-width: 600px) {
+    .forecast-grid {
+      grid-template-columns: repeat(4, 1fr);
+    }
+
+    .current-header {
+      flex-direction: column;
+      align-items: flex-start;
+      gap: 1rem;
+    }
+
+    .temp-big { font-size: 3rem; }
+  }
+
+  @media (max-width: 400px) {
+    .forecast-grid {
+      grid-template-columns: repeat(3, 1fr);
+    }
+  }
+</style>
+
+<script>
+  // ─── DARK MODE ───────────────────────────────────────────────
+  const btn = document.getElementById('theme-toggle');
+  const icon = document.getElementById('theme-icon');
+
+  // Aplica el tema guardado al cargar
+  const saved = localStorage.getItem('theme') || 'light';
+  document.documentElement.setAttribute('data-theme', saved);
+  icon.textContent = saved === 'dark' ? '☀️' : '🌙';
+
+  btn.addEventListener('click', () => {
+    const current = document.documentElement.getAttribute('data-theme');
+    const next = current === 'dark' ? 'light' : 'dark';
+    document.documentElement.setAttribute('data-theme', next);
+    localStorage.setItem('theme', next);
+    icon.textContent = next === 'dark' ? '☀️' : '🌙';
+  });
+
+  // ─── WEATHER API ─────────────────────────────────────────────
+  const searchBtn = document.getElementById('search-btn');
+  const cityInput = document.getElementById('city-input');
+  const errorMsg  = document.getElementById('error-msg');
+  const loading   = document.getElementById('loading');
+
+  const currentSection  = document.getElementById('current-section');
+  const forecastSection = document.getElementById('forecast-section');
+
+  // Ejecuta búsqueda al hacer click o presionar Enter
+  searchBtn.addEventListener('click', () => fetchWeather());
+  cityInput.addEventListener('keydown', (e) => {
+    if (e.key === 'Enter') fetchWeather();
+  });
+
+  async function fetchWeather() {
+    const city = cityInput.value.trim();
+    if (!city) return;
+
+    // Mostrar loading, ocultar resultados anteriores
+    errorMsg.hidden = true;
+    currentSection.hidden = true;
+    forecastSection.hidden = true;
+    loading.hidden = false;
+
+    try {
+      // PASO 1: Geocoding — convertir nombre de ciudad a coordenadas
+      const geoRes = await fetch(
+        `https://geocoding-api.open-meteo.com/v1/search?name=${encodeURIComponent(city)}&count=1&language=es&format=json`
+      );
+      const geoData = await geoRes.json();
+
+      if (!geoData.results || geoData.results.length === 0) {
+        throw new Error('Ciudad no encontrada');
+      }
+
+      const { latitude, longitude, name, country } = geoData.results[0];
+
+      // PASO 2: Fetch del clima con las coordenadas
+      const weatherRes = await fetch(
+        `https://api.open-meteo.com/v1/forecast?latitude=${latitude}&longitude=${longitude}` +
+        `&current=temperature_2m,apparent_temperature,relative_humidity_2m,wind_speed_10m,precipitation,weather_code` +
+        `&daily=temperature_2m_max,temperature_2m_min,weather_code` +
+        `&timezone=auto&forecast_days=7`
+      );
+      const weatherData = await weatherRes.json();
+
+      renderCurrent(weatherData.current, name, country);
+      renderForecast(weatherData.daily);
+
+    } catch (err) {
+      errorMsg.hidden = false;
+    } finally {
+      loading.hidden = true;
+    }
+  }
+
+  // ─── RENDER: CLIMA ACTUAL ────────────────────────────────────
+  function renderCurrent(current, city, country) {
+    document.getElementById('city-name').textContent = `${city}, ${country}`;
+    document.getElementById('weather-desc').textContent = getWeatherDesc(current.weather_code);
+    document.getElementById('temp-value').textContent = Math.round(current.temperature_2m);
+
+    // Actualizar las 4 cards (son los segundos hijos de cards-grid)
+    const cards = document.querySelectorAll('.cards-grid .card');
+    const values = [
+      Math.round(current.apparent_temperature),
+      current.relative_humidity_2m,
+      Math.round(current.wind_speed_10m),
+      current.precipitation ?? 0,
+    ];
+
+    cards.forEach((card, i) => {
+      card.querySelector('.value').childNodes[0].textContent = values[i];
+    });
+
+    currentSection.hidden = false;
+  }
+
+  // ─── RENDER: PRONÓSTICO ──────────────────────────────────────
+  function renderForecast(daily) {
+    const grid = document.getElementById('forecast-grid');
+    grid.innerHTML = '';
+
+    const days = ['Dom','Lun','Mar','Mié','Jue','Vie','Sáb'];
+
+    daily.time.forEach((dateStr, i) => {
+      const date = new Date(dateStr + 'T12:00:00');
+      const dayName = i === 0 ? 'Hoy' : days[date.getDay()];
+      const max = Math.round(daily.temperature_2m_max[i]);
+      const min = Math.round(daily.temperature_2m_min[i]);
+      const emoji = getWeatherEmoji(daily.weather_code[i]);
+
+      const card = document.createElement('div');
+      card.className = 'forecast-card';
+      card.innerHTML = `
+        <span class="f-day">${dayName}</span>
+        <span class="f-icon">${emoji}</span>
+        <span class="f-max">${max}°</span>
+        <span class="f-min">${min}°</span>
+      `;
+      grid.appendChild(card);
+    });
+
+    // Inyectar estilos inline de las cards del pronóstico
+    const style = document.createElement('style');
+    style.textContent = `
+      .forecast-card {
+        background: var(--surface);
+        border: 1px solid var(--border);
+        border-radius: 12px;
+        padding: 0.85rem 0.5rem;
+        text-align: center;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        gap: 0.3rem;
+        box-shadow: var(--shadow);
+      }
+      .f-day { font-size: 0.7rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.05em; color: var(--text-muted); }
+      .f-icon { font-size: 1.4rem; }
+      .f-max { font-size: 0.95rem; font-weight: 700; font-family: 'DM Mono', monospace; }
+      .f-min { font-size: 0.8rem; color: var(--text-muted); font-family: 'DM Mono', monospace; }
+    `;
+    if (!document.getElementById('forecast-styles')) {
+      style.id = 'forecast-styles';
+      document.head.appendChild(style);
+    }
+
+    forecastSection.hidden = false;
+  }
+
+  // ─── HELPERS: CÓDIGO WMO → TEXTO / EMOJI ────────────────────
+  function getWeatherDesc(code) {
+    if (code === 0) return 'Despejado';
+    if (code <= 2) return 'Parcialmente nublado';
+    if (code === 3) return 'Nublado';
+    if (code <= 49) return 'Niebla';
+    if (code <= 59) return 'Llovizna';
+    if (code <= 69) return 'Lluvia';
+    if (code <= 79) return 'Nieve';
+    if (code <= 82) return 'Aguacero';
+    if (code <= 99) return 'Tormenta';
+    return 'Desconocido';
+  }
+
+  function getWeatherEmoji(code) {
+    if (code === 0) return '☀️';
+    if (code <= 2) return '⛅';
+    if (code === 3) return '☁️';
+    if (code <= 49) return '🌫️';
+    if (code <= 69) return '🌧️';
+    if (code <= 79) return '❄️';
+    if (code <= 82) return '🌦️';
+    if (code <= 99) return '⛈️';
+    return '🌡️';
+  }
+</script>
